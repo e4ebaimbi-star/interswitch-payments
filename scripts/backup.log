@@ -1,0 +1,10 @@
+
+'EOF' [2024-01-10 09:00:00] [INFO]
+==================================== [2024-01-10 09:00:00] [INFO] Backup
+started | ENV: production [2024-01-10 09:00:00] [INFO] Disk at 34% - healthy.
+[2024-01-10 09:00:01] [SUCCESS] Backed up: src [2024-01-10 09:00:01] [SUCCESS]
+Backed up: docs [2024-01-10 09:00:02] [WARNING] Disk at 76% - watch closely
+[2024-01-10 09:00:02] [ERROR] Failed to back up: logs [2024-01-10 09:00:03]
+[SUCCESS] Backed up: scripts [2024-01-10 09:00:03] [INFO] Done: 3 OK | 0
+skipped | 1 failed [2024-01-10 09:00:03] [INFO]
+==================================== EOF
