@@ -1,0 +1,62 @@
+---
+name: Interswitch Portal — CI/CD Pipeline
+on:
+  push:
+    branches:
+      - main
+jobs:
+  # ================================================
+  # JOB 1: Validate files before any deployment
+  # ================================================
+  validate:
+    name: Validate Web Files
+    runs-on: ubuntu-latest
+    steps:
+
+     - name: Checkout repository
+       uses: actions/checkout@v4
+
+     - name: Show file structure
+       run: |
+         echo '=== Repository structure ==='
+         ls -la
+         echo '=== Web directory ==='
+         ls -la web/
+
+     - name: Check web directory exists
+       run: |
+         if [ ! -d 'web' ]; then
+          echo 'ERROR: web/ directory not found'
+          exit 1
+         fi
+          echo 'OK: web/ directory found'
+
+     - name: Check index.html exists and is not empty
+       run: |
+        if [ ! -f 'web/index.html' ]; then
+          echo 'ERROR: web/index.html not found'
+          exit 1
+        fi
+        if [ ! -s 'web/index.html' ]; then
+          echo 'ERROR: web/index.html is empty'
+          exit 1
+        fi
+          echo 'OK: web/index.html found and is not empty'
+
+     - name: Check style.css exists and is not empty
+       run: |
+        if [ ! -f 'web/style.css' ]; then
+          echo 'ERROR: web/style.css not found'
+          exit 1
+        fi
+        if [ ! -s 'web/style.css' ]; then
+          echo 'ERROR: web/style.css is empty'
+          exit 1
+        fi
+        echo 'OK: web/style.css found and is not empty'
+
+     - name: Validation summary
+       run: |
+         echo '================================================'
+         echo 'All validation checks passed. Safe to deploy.'
+         echo '================================================'
