@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ==================================================
  Interswitch Daily Backup Health Report
  Date : 2026-07-30
@@ -18,4 +19,26 @@
 --- Recommended Action ---
  1. Check log file immediately: interswitch_backups/backup.log
  2. Re-run failed backups manually
+=======
+==================================================
+ Interswitch Daily Backup Health Report
+ Date : 2026-07-30
+ Status : RED
+==================================================
+
+--- Backup Summary ---
+ Successful backups : 2
+ Warnings : 1
+ Errors : 1
+
+--- Health Assessment ---
+ CRITICAL: One or more backups failed.
+
+--- Failed Directories ---
+ - logs [2024-01-10 09:00:03]
+
+--- Recommended Action ---
+ 1. Check log file immediately: interswitch_backups/backup.log
+ 2. Re-run failed backups manually
+>>>>>>> 7396752c519a7c0d5115542691c12cbf7052f29e
  3. Notify on-call engineer and compliance team
