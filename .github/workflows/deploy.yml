@@ -83,9 +83,7 @@ jobs:
     - name: Copy web files to devops-vm
       run: |
         echo 'Copying files to devops-vm...'
-        scp -i ~/.ssh/deploy_key -r web/* \
-
-  ${{ secrets.devopsvm_USER }}@${{ secrets.devopsvm_HOST }}:/tmp/interswitch_web/
+        scp -i ~/.ssh/deploy_key -r web/* ${{ secrets.devopsvm_USER }}@${{ secrets.devopsvm_HOST }}:/tmp/interswitch_web/
 
     - name: Install files to Nginx web root
       run: |
