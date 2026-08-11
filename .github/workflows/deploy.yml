@@ -76,7 +76,7 @@ jobs:
 
     - name: Set up SSH key
       run: |
-        test -d ~/.ssh || mkdir ~/.ssh
+         mkdir -p ~/.ssh
         cat > ~/.ssh/deploy_key << 'EOF'
         ${{ secrets.SSH_PRIVATE_KEY }}
         EOF
