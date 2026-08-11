@@ -75,12 +75,12 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Set up SSH key
-      uses: appleboy/ssh-actions@v1.2.0
-      with:
-        host: ${{ secrets.UBUNTU_HOST }}
-        username: $ {{ secrets.UBUNTU_USER }}
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+        chmod 600 ~/.ssh/deploy_key
+        ssh-keyscan -H ${{ secrets.UBUNTU_HOST }} >> ~/.ssh/known_hosts
+
     - name: Copy web files to Ubuntu
       run: |
         echo 'Copying files to Ubuntu...'
