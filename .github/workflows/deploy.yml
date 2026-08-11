@@ -77,7 +77,9 @@ jobs:
     - name: Set up SSH key
       run: |
         mkdir -p ~/.ssh
-        printf '%\s' "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+        cat > ~/.ssh/deploy_key << 'EOF'
+        ${{ secrets.SSH_PRIVATE_KEY }}
+        EOF
         chmod 600 ~/.ssh/deploy_key
         ssh-keyscan -H ${{ secrets.UBUNTU_HOST }} >> ~/.ssh/known_hosts
 
