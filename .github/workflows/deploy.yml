@@ -85,12 +85,12 @@ jobs:
       run: |
         echo 'Copying files to Ubuntu...'
         scp -i ~/.ssh/deploy_key -r web/* \
-          ${{ secrets.SSH_PRIVATE_KEY }}@${{ secrets.UBUNTU_HOST }}:/tmp/interswitch_web/
+          ${{ secrets.UBUNTU_USER }}@${{ secrets.UBUNTU_HOST }}:/tmp/interswitch_web/
 
     - name: Install files to Nginx web root
       run: |
         ssh -i ~/.ssh/deploy_key \
-          ${{ secrets.SSH_PRIVATE_KEY }}@${{ secrets.UBUNTU_HOST }} \
+          ${{ secrets.UBUNTU_USER }}@${{ secrets.UBUNTU_HOST }} \
           'sudo mkdir -p /usr/share/nginx/html && \
            sudo cp /tmp/interswitch_web/* /usr/share/nginx/html/ && \
            sudo chown -R nginx:nginx /usr/share/nginx/html/ && \
@@ -99,13 +99,13 @@ jobs:
     - name: Verify Nginx is still running
       run: |
         ssh -i ~/.ssh/deploy_key \
-          ${{ secrets.SSH_PRIVATE_KEY }}@${{ secrets.UBUNTU_HOST }} \
+          ${{ secrets.UBUNTU_USER }}@${{ secrets.UBUNTU_HOST }} \
           'sudo systemctl status nginx --no-pager'
 
     - name: Write deployment log entry
       run: |
         ssh -i ~/.ssh/deploy_key \
-          ${{ secrets.SSH_PRIVATE_KEY }}@${{ secrets.UBUNTU_HOST }} \
+          ${{ secrets.UBUNTU_USER }}@${{ secrets.UBUNTU_HOST }} \
           "echo '[$(date)] Deployed ${{ github.sha }}' \ | sudo tee -a /var/log/interswitch_deployments.log"
 
     - name: Deployment complete
