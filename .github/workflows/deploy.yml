@@ -77,20 +77,20 @@ jobs:
     - name: Set up SSH key
       run: |
         mkdir -p ~/.ssh
-        echo "${{ secrets.Ubuntu_Secret_User }}" > ~/.ssh/deploy_key
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
         chmod 600 ~/.ssh/deploy_key
-        ssh-keyscan -H ${{ secrets.Ubuntu_Host }} >> ~/.ssh/known_hosts
+        ssh-keyscan -H ${{ secrets.UBUNTU_HOST }} >> ~/.ssh/known_hosts
 
     - name: Copy web files to Ubuntu
       run: |
         echo 'Copying files to Ubuntu...'
         scp -i ~/.ssh/deploy_key -r web/* \
-          ${{ secrets.Ubuntu_User }}@${{ secrets.Ubuntu_Host }}:/tmp/interswitch_web/
+          ${{ secrets.SSH_PRIVATE_KEY }}@${{ secrets.UBUNTU_HOST }}:/tmp/interswitch_web/
 
     - name: Install files to Nginx web root
       run: |
         ssh -i ~/.ssh/deploy_key \
-          ${{ secrets.Ubuntu_User }}@${{ secrets.Ubuntu_Host }} \
+          ${{ secrets.SSH_PRIVATE_KEY }}@${{ secrets.UBUNTU_HOST }} \
           'sudo mkdir -p /usr/share/nginx/html && \
            sudo cp /tmp/interswitch_web/* /usr/share/nginx/html/ && \
            sudo chown -R nginx:nginx /usr/share/nginx/html/ && \
@@ -99,18 +99,18 @@ jobs:
     - name: Verify Nginx is still running
       run: |
         ssh -i ~/.ssh/deploy_key \
-          ${{ secrets.Ubuntu_User }}@${{ secrets.Ubuntu_Host }} \
+          ${{ secrets.SSH_PRIVATE_KEY }}@${{ secrets.UBUNTU_HOST }} \
           'sudo systemctl status nginx --no-pager'
 
     - name: Write deployment log entry
       run: |
         ssh -i ~/.ssh/deploy_key \
-          ${{ secrets.Ubuntu_User }}@${{ secrets.Ubuntu_Host }} \
+          ${{ secrets.SSH_PRIVATE_KEY }}@${{ secrets.UBUNTU_HOST }} \
           "echo '[$(date)] Deployed ${{ github.sha }}' \ | sudo tee -a /var/log/interswitch_deployments.log"
 
     - name: Deployment complete
       run: |
         echo '================================================'
         echo 'Deployment complete!'
-        echo "Live at: http://${{ secrets.Ubuntu_Host }}"
+        echo "Live at: http://${{ secrets.UBUNTU_HOST }}"
         echo '================================================'
