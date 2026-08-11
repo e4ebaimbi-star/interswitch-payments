@@ -62,4 +62,55 @@ jobs:
          echo '================================================'
 
 
+# ================================================
+# JOB 2: Deploy to EC2 after validation passes
+# ================================================
+  deploy:
+    name: Deploy to Ubuntu
+    runs-on: ubuntu-latest
+    needs: validate # Only runs if validate passed
 
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up SSH key
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.Ubuntu_Secret_User }}" > ~/.ssh/deploy_key
+        chmod 600 ~/.ssh/deploy_key
+        ssh-keyscan -H ${{ secrets.Ubuntu_Host }} >> ~/.ssh/known_hosts
+
+    - name: Copy web files to Ubuntu
+      run: |
+        echo 'Copying files to Ubuntu...'
+        scp -i ~/.ssh/deploy_key -r web/* \
+          ${{ secrets.Ubuntu_User }}@${{ secrets.Ubuntu_Host }}:/tmp/interswitch_web/
+
+    - name: Install files to Nginx web root
+      run: |
+        ssh -i ~/.ssh/deploy_key \
+          ${{ secrets.Ubuntu_User }}@${{ secrets.Ubuntu_Host }} \
+          'sudo mkdir -p /usr/share/nginx/html && \
+           sudo cp /tmp/interswitch_web/* /usr/share/nginx/html/ && \
+           sudo chown -R nginx:nginx /usr/share/nginx/html/ && \
+           sudo chmod -R 755 /usr/share/nginx/html/'
+
+    - name: Verify Nginx is still running
+      run: |
+        ssh -i ~/.ssh/deploy_key \
+          ${{ secrets.Ubuntu_User }}@${{ secrets.Ubuntu_Host }} \
+          'sudo systemctl status nginx --no-pager'
+
+    - name: Write deployment log entry
+      run: |
+        ssh -i ~/.ssh/deploy_key \
+          ${{ secrets.Ubuntu_User }}@${{ secrets.Ubuntu_Host }} \
+          "echo '[$(date)] Deployed ${{ github.sha }}' \ | sudo tee -a /var/log/interswitch_deployments.log"
+
+    - name: Deployment complete
+      run: |
+        echo '================================================'
+        echo 'Deployment complete!'
+        echo "Live at: http://${{ secrets.Ubuntu_Host }}"
+        echo '================================================'
