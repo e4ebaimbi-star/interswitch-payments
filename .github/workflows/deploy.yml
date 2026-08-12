@@ -18,9 +18,9 @@ jobs:
 
      - name: Show file structure
        run: |
-         echo '=== Repository structure ==='
-         dir /s
-         echo '=== Web directory ==='
+         echo === Repository structure ===
+         Get-ChildItem -Recurse
+         echo === Done ===
 
      - name: Check web directory exists
        run: |
