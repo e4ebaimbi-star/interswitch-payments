@@ -63,55 +63,39 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Set up SSH key
-      shell: cmd
       run: |
-        if not exist "%USERPROFILE%\.ssh" mkdir "%USERPROFILE%\.ssh"
-        echo %DEPLOY_KEY% > "%USERPROFILE%\.ssh\deploy_key"
-        icacls "%USERPROFILE%\.ssh\deploy_key" /inheritance:r /grant: r "%USERNAME%:R"
-        ssh-keyscan -H %UBUNTU_HOST% >> "%USERPROFILE%\.ssh\known_hosts"
-      env:
-        DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
-        UBUNTU_HOST: ${{ secrets.UBUNTU_HOST}}
+        mkdir -p ~/.ssh
+        echo "${{ secrets.DEPLOY_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H ${{ secrets.UBUNTU_HOST }} > ~/.ssh/known_hosts
 
     - name: Copy web files to Ubuntu
-      shell: cmd
       run: |
-        echo Copying files to Ubuntu...
-        scp -i "%USERPROFILE%\.ssh\deploy_key" -r web\* %UBUNTU_USER%@%UBUNTU_HOST%:/tmp/interswitch_web/
-      env:
-        UBUNTU_USER: ${{ secrets.UBUNTU_USER }}
-        UBUNTU_HOST: ${{ secrets.UBUNTU_HOST }}
+        echo "Copying files to Ubuntu..."
+        scp -i ~/.ssh/id_rsa -r web/* ${{ secrets.UBUNTU_USER }}@${{ secrets.UBUNTU_HOST }}:/tmp/interswitch/
 
     - name: Install files to Nginx web root
-      shell: cmd
       run: |
-        ssh -i "%USERPROFILE.ssh\deploy_key" -o StrictHostKeyChecking=no %UBUNTU_USER%@UBUNTU_HOST% "sudo mkdir -p /usr/share/nginx/html && sudo cp /tmp/interswitch_web/* /usr/share/nginx/html && sudo chown -R www-data:www-data /usr/share/nginx/html/ && sudo chmod -R 755 /usr/share/nginx/html/ && sudo systemctl reload nginx"
-      env:   
-        UBUNTU_USER: ${{ secrets.UBUNTU_USER }}
-        UBUNTU_HOST: ${{ secrets.UBUNTU_HOST }} 
+        ssh -i ~/.ssh/id_rsa ${{ secrets.UBUNTU_USER }}@${{ secrets.UBUNTU_HOST}} "
+          sudo rm -rf /var/www/html/* &&
+          sudo mv /tmp/interswitch/* /var/www/html/ &&
+          sudo systemctl reload nginx
+          "
+        
 
     - name: Verify Nginx is still running
-      shell: cmd
       run: |
-        ssh -i "%USERPROFILE%\.ssh\deploy_key" -o StrictHostKeyChecking=no %UBUNTU_USER%@%UBUNTU_HOST% "sudo systemctl is-active nginx"
-      env:
-        UBUNTU_USER: ${{ secrets.UBUNTU_USER }}
-        UBUNTU_HOST: ${{ secrets.UBUNTU_HOST }} 
+        ssh -i ~/.ssh/id_rsa ${{ secrets.UBUNTU_USER }}@${{ secrets.UBUNTU_HOST }} "sudo systemctl status nginx --no-pager" 
 
     - name: Write deployment log entry
-      shell: cmd
       run: |
-        ssh -i "%USERPROFILE%\.ssh/deploy_key" -o StrictHostKeyChecking=no %UBUNTU_USER%@UBUNTU_HOST% "echo [$(date)] Deployed commit ${{ github.sha }} by ${{ github.actor }} >> /var/log/interswitch-deploy.log"
-      env:    
-          UBUNTU_USER: ${{ secrets.UBUNTU_USER }}
-          UBUNTU_HOST: ${{ secrets.UBUNTU_HOST }}
-          
+        ssh -i ~/.ssh/id_rsa ${{ secrets.UBUNTU_USER}}@{{ secrets.UBUNTU_HOST }}
+        "echo '[$(date)] Deployed ${{ github.sha }}' \ | sudo tee -a /var/log/interswitch_deployments.log"
 
     - name: Deployment complete
       run: |
-        echo ================================================
-        echo Deployment complete!
-        echo Successfully deployed to http://%UBUNTU_HOST% 
-        echo ================================================
-      env:
-        UBUNTU_HOST: $ {{ secrets.UBUNTU_HOST }}  
+        echo "================================================"
+        echo "Deployment complete!"
+        echo "Successfully deployed to http://%UBUNTU_HOST%"
+        echo "================================================"
+       
