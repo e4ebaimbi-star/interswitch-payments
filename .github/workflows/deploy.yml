@@ -70,7 +70,7 @@ jobs:
     - name: Add host to known_hosts
       shell: cmd
       run: if not exist "%USERPROFILE%\.ssh" mkdir "%USERPROFILE%\.ssh"
-           ssh-keyscan -H -T 10 ${{ secrets.UBUNTU_HOST}} >> "%USERPROFILE%\.ssh\known_hosts" 2>nul || echo "Host already in known_hosts" 
+           ssh-keyscan -H -t rsa, ecdsa, ed25519 -T 10 ${{ secrets.UBUNTU_HOST}} >> "%USERPROFILE%\.ssh\known_hosts" 2>nul || echo "Host already in known_hosts" 
         
     - name: Copy web files to Ubuntu
       shell: cmd
