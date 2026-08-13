@@ -45,9 +45,9 @@ jobs:
 
      - name: Validation summary
        run: |
-         echo '================================================'
+         echo ================================================
          echo 'All validation checks passed. Safe to deploy.'
-         echo '================================================'
+         echo ================================================
 
 
 # ================================================
@@ -81,20 +81,18 @@ jobs:
 
     - name: Verify Nginx is still running
       shell: cmd
-      run: |
-        ssh -i "%USERPROFILE%\.ssh\id_rsa ${{ secrets.UBUNTU_USER }}@${{ secrets.UBUNTU_HOST }} "sudo systemctl status nginx --no-pager" 
+      run: ssh ${{ secrets.UBUNTU_USER }}@${{ secrets.UBUNTU_HOST }} "sudo systemctl status nginx --no-pager" 
 
     - name: Write deployment log entry
       shell: cmd
-      run: |
-        ssh -i "%USERPROFILE%\.ssh\id_rsa ${{ secrets.UBUNTU_USER}}@{{ secrets.UBUNTU_HOST }}
+      run: ssh ${{ secrets.UBUNTU_USER}}@{{ secrets.UBUNTU_HOST }}
         "echo '[$(date)] Deployed ${{ github.sha }}' \ | sudo tee -a /var/log/interswitch_deployments.log"
 
     - name: Deployment complete
       shell: cmd
       run: |
-        echo "================================================"
+        echo ================================================
         echo "Deployment complete!"
-        echo "Successfully deployed to http://%UBUNTU_HOST%"
-        echo "================================================"
+        echo "Successfully deployed to http://${{ secret.UBUNTU_HOST }}"
+        echo ================================================
        
