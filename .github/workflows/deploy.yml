@@ -74,7 +74,7 @@ jobs:
         
     - name: Copy web files to Ubuntu
       shell: cmd
-      run: scp -r web/* ${{ secrets.UBUNTU_USER }}@${{ secrets.UBUNTU_HOST }}:/tmp/interswitch/
+      run: scp -i "%USERPROFILE%\.ssh\id_rsa" -r web/* ${{ secrets.UBUNTU_USER }}@${{ secrets.UBUNTU_HOST }}:/tmp/interswitch/
 
     - name: Install files to Nginx web root
       shell: cmd
