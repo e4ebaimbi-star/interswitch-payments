@@ -93,6 +93,6 @@ jobs:
       run: |
         echo ================================================
         echo "Deployment complete!"
-        echo "Successfully deployed to http://${{ secret.UBUNTU_HOST }}"
+        echo "Successfully deployed to http://${{ secrets.UBUNTU_HOST }}"
         echo ================================================
        
