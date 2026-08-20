@@ -73,12 +73,15 @@ jobs:
            ssh-keyscan -H -t rsa, ecdsa, ed25519 -T 10 ${{ secrets.UBUNTU_HOST}} >> "%USERPROFILE%\.ssh\known_hosts" 2>nul || echo "Host already in known_hosts" 
         
     - name: Copy web files to Ubuntu
-      shell: cmd
-      run: scp -o StrictHostKeyChecking=no -r web/* ${{ secrets.UBUNTU_USER }}@${{ secrets.UBUNTU_HOST }}:/tmp/interswitch/
+      shell: bash
+      run: | 
+          ssh -o StrictHostKeyChecking=no ${{ secrets.UBUNTU_USER }}@${{ secrets.UBUNTU_HOST }} "mkdir -p /tmp/interswitch/"
+          scp -o StrictHostKeyChecking=no -r web/* ${{ secrets.UBUNTU_USER }}@${{ secrets.UBUNTU_HOST }}:/tmp/interswitch/
 
     - name: Install files to Nginx web root
-      shell: cmd
-      run: ssh ${{ secrets.UBUNTU_USER }}@${{ secrets.UBUNTU_HOST}} "sudo rm -rf /var/www/html/* && sudo mv /tmp/interswitch/* /var/www/html/ && sudo systemctl reload nginx"
+      shell: bash
+      run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.UBUNTU_USER }}@${{ secrets.UBUNTU_HOST}} "sudo rm -rf /var/www/html/* && sudo mv /tmp/interswitch/* /var/www/html/ && sudo chown -R www-data:www-data /var/www/html/"
 
     - name: Verify Nginx is still running
       shell: cmd
