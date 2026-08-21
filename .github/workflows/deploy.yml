@@ -1,0 +1,124 @@
+
+name: Interswitch Portal — CI/CD Pipeline
+on:
+  push:
+    branches:
+      - main
+jobs:
+  # ================================================
+  # JOB 1: Validate files before any deployment
+  # ================================================
+  validate:
+    name: Validate Web Files
+    runs-on: ubuntu-latest
+    steps:
+
+     - name: Checkout repository
+       uses: actions/checkout@v4
+
+     - name: Show file structure
+       run: |
+         echo === Repository structure ===
+         pwd
+         ls -la
+         ls -la web/ || echo "no web folder"
+         echo === Done ===
+
+     - name: Check web directory exists
+       run: |
+         if [ -d "web" ]; then 
+           echo "web directory exists" 
+         else  
+           ls -la
+           exit 1
+         fi  
+
+     - name: Check index.html exists and is not empty
+       run: |
+         if [ -f "web/index.html" ] && [ -s "web/index.html" ]; then
+           echo "index.html exist and not empty"
+         else
+           echo "index.html missing - checking where it is..."
+           find . -name "index.html" -type f
+           exit 1
+         fi
+
+     - name: Check style.css exists and is not empty
+       run: |
+         if [ -f "web/style.css" ] && [ -s "web/style.css" ]; then
+            echo "style.css ok"
+         else 
+            echo "style.css missing or empty"
+            ls -la web/
+         fi
+
+     - name: Validation summary
+       run: |
+         echo ================================================
+         echo 'All validation checks passed. Safe to deploy.'
+         echo ================================================
+
+
+# ================================================
+# JOB 2: Deploy via SSH after validation passes
+# ================================================
+  deploy:
+    name: Deploy Via SSH
+    runs-on: ubuntu-latest
+    needs: validate # Only runs if validate passed
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up SSH key
+      uses: webfactory/ssh-agent@v0.9.0
+      with: 
+        ssh-private-key: ${{ secrets.DEPLOY_KEY }} 
+        host: ${{ secrets.UBUNTU_HOST }}
+        username: ${{ secrets.UBUNTU_USER }}
+        script: |
+          echo "Deploying ..."
+          sudo rm -rf /var/www/html/*
+          sudo cp -r {{ github.workspace }}/web/* /var/www/html/ 2>/dev/null || sudo cp -r ${{ github.workspace }}/* /var/www/html/ 2>/dev/null || true
+          ls -la /var/www/html/
+          sudo systemctl restart nginx || sudo systemctl restart apache2 || true
+          echo "Deployment done - $(date)" | sudo tee -a /var/log/interswitch_deployments.log
+          echo "Deployed commit ${{ github.sha }}"
+
+    - name: Add host to known_hosts
+      shell: bash
+      run: |
+        mkdir -p ~/.ssh
+        ssh-keyscan -H ${{ secrets.UBUNTU_HOST }} >> ~/.ssh/known_hosts  
+        
+    - name: Copy web files to Ubuntu
+      shell: bash
+      run: | 
+        ssh -o StrictHostKeyChecking=no ${{ secrets.UBUNTU_USER }}@${{ secrets.UBUNTU_HOST }} "mkdir -p /tmp/interswitch/"
+        scp -o StrictHostKeyChecking=no -r web/* ${{ secrets.UBUNTU_USER }}@${{ secrets.UBUNTU_HOST }}:/tmp/interswitch/
+
+    - name: Install files to Nginx web root
+      shell: bash
+      run: |
+        ssh -o StrictHostKeyChecking=no ${{ secrets.UBUNTU_USER }}@${{ secrets.UBUNTU_HOST}} "sudo rm -rf /var/www/html/* && sudo mv /tmp/interswitch/* /var/www/html/ && sudo chown -R www-data:www-data /var/www/html/"
+
+    - name: Verify Nginx is still running
+      shell: bash
+      run: |
+        ssh ${{ secrets.UBUNTU_USER }}@${{ secrets.UBUNTU_HOST }} "sudo systemctl status nginx --no-pager || sudo systemctl status apache2 --no-pager" 
+
+    - name: Write deployment log entry
+      shell: bash
+      run: ssh ${{ secrets.UBUNTU_USER }}@${{ secrets.UBUNTU_HOST }}
+        "echo '[$(date)] Deployed ${{ github.sha }}'  | sudo tee -a /var/log/interswitch_deployments.log"
+
+    - name: Deployment complete
+      shell: bash
+      run: |
+        echo ================================================
+        echo "Deployment complete!"
+        echo "Successfully deployed to http://${{ secrets.UBUNTU_HOST }}"
+        echo ================================================
+       
