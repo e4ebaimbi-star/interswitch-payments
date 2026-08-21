@@ -86,32 +86,34 @@ jobs:
           echo "Deployed to /var/www/html"
 
     - name: Add host to known_hosts
-      shell: cmd
-      run: if not exist "%USERPROFILE%\.ssh" mkdir "%USERPROFILE%\.ssh"
-           ssh-keyscan -H -t rsa, ecdsa, ed25519 -T 10 ${{ secrets.UBUNTU_HOST}} >> "%USERPROFILE%\.ssh\known_hosts" 2>nul || echo "Host already in known_hosts" 
+      shell: bash
+      run: |
+        mkdir -p ~/.ssh
+        ssh-keyscan -H -t rsa, ecdsa, ed25519 -T 10 ${{ secrets.UBUNTU_HOST}} >> ~/.ssh/known_hosts  
         
     - name: Copy web files to Ubuntu
       shell: bash
       run: | 
-          ssh -o StrictHostKeyChecking=no ${{ secrets.UBUNTU_USER }}@${{ secrets.UBUNTU_HOST }} "mkdir -p /tmp/interswitch/"
-          scp -o StrictHostKeyChecking=no -r web/* ${{ secrets.UBUNTU_USER }}@${{ secrets.UBUNTU_HOST }}:/tmp/interswitch/
+        ssh -o StrictHostKeyChecking=no ${{ secrets.UBUNTU_USER }}@${{ secrets.UBUNTU_HOST }} "mkdir -p /tmp/interswitch/"
+        scp -o StrictHostKeyChecking=no -r web/* ${{ secrets.UBUNTU_USER }}@${{ secrets.UBUNTU_HOST }}:/tmp/interswitch/
 
     - name: Install files to Nginx web root
       shell: bash
       run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.UBUNTU_USER }}@${{ secrets.UBUNTU_HOST}} "sudo rm -rf /var/www/html/* && sudo mv /tmp/interswitch/* /var/www/html/ && sudo chown -R www-data:www-data /var/www/html/"
+        ssh -o StrictHostKeyChecking=no ${{ secrets.UBUNTU_USER }}@${{ secrets.UBUNTU_HOST}} "sudo rm -rf /var/www/html/* && sudo mv /tmp/interswitch/* /var/www/html/ && sudo chown -R www-data:www-data /var/www/html/"
 
     - name: Verify Nginx is still running
-      shell: cmd
-      run: ssh ${{ secrets.UBUNTU_USER }}@${{ secrets.UBUNTU_HOST }} "sudo systemctl status nginx --no-pager" 
+      shell: bash
+      run: |
+        ssh ${{ secrets.UBUNTU_USER }}@${{ secrets.UBUNTU_HOST }} "sudo systemctl status nginx --no-pager || sudo systemctl status apache2 --no-pager" 
 
     - name: Write deployment log entry
-      shell: cmd
-      run: ssh ${{ secrets.UBUNTU_USER}}@{{ secrets.UBUNTU_HOST }}
-        "echo '[$(date)] Deployed ${{ github.sha }}' \ | sudo tee -a /var/log/interswitch_deployments.log"
+      shell: bash
+      run: ssh ${{ secrets.UBUNTU_USER }}@${{ secrets.UBUNTU_HOST }}
+        "echo '[$(date)] Deployed ${{ github.sha }}'  | sudo tee -a /var/log/interswitch_deployments.log"
 
     - name: Deployment complete
-      shell: cmd
+      shell: bash
       run: |
         echo ================================================
         echo "Deployment complete!"
