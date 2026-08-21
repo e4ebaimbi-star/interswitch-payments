@@ -81,7 +81,7 @@ jobs:
         script: |
           echo "Deploying ..."
           sudo rm -rf /var/www/html/*
-          sudo cp -r {{ github.workspace }}/web/* /var/www/html/ 2>/dev/null || sudo cp -r ${{ github_workspace }}/* /var/www/html/ 2>/dev/null || true
+          sudo cp -r {{ github.workspace }}/web/* /var/www/html/ 2>/dev/null || sudo cp -r ${{ github.workspace }}/* /var/www/html/ 2>/dev/null || true
           ls -la /var/www/html/
           sudo systemctl restart nginx || sudo systemctl restart apache2 || true
           echo "Deployment done - $(date)" | sudo tee -a /var/log/interswitch_deployments.log
