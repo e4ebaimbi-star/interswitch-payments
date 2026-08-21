@@ -19,9 +19,9 @@ jobs:
      - name: Show file structure
        run: |
          echo === Repository structure ===
-         ls -la
          pwd
-         ls -la web/ || ls -la ./ || echo "no web folder"
+         ls -la
+         ls -la web/ || echo "no web folder"
          echo === Done ===
 
      - name: Check web directory exists
@@ -36,19 +36,21 @@ jobs:
      - name: Check index.html exists and is not empty
        run: |
          if [ -f "web/index.html"] && [ -s "web/index.html" ];
-then
-            echo "index.html exist and not empty"
+  then
+           echo "index.html exist and not empty"
          else
-            exit 1
+           echo "index.html missing"
+           exit 1
          fi
 
      - name: Check style.css exists and is not empty
        run: |
          if [ -f "web/style.css" ] && [ -s "web/style.css" ];
-then
+  then
             echo "style.css ok"
          else 
-            exit 1 
+            echo "style.css missing or empty"
+            ls -la web/
          fi
 
      - name: Validation summary
@@ -83,7 +85,6 @@ then
           sudo cp -r GITHUB_WORKSPACE/web/* /var/www/html/ 2>/dev/null || sudo cp -r web/* /var/www/html/
           sudo systemctl restart nginx || sudo systemctl restart apache2 || true
           echo "Deployed to /var/www/html"
-          ls -la
 
     - name: Add host to known_hosts
       shell: cmd
