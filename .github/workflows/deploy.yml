@@ -19,7 +19,9 @@ jobs:
      - name: Show file structure
        run: |
          echo === Repository structure ===
-         Get-ChildItem -Recurse
+         ls -la
+         pwd
+         ls -la web/ || ls -la ./ || echo "no web folder"
          echo === Done ===
 
      - name: Check web directory exists
