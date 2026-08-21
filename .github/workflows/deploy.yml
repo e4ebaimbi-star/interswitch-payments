@@ -73,7 +73,7 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Set up SSH key
-      uses: webfactory/ssh-agent@v0.9.0
+      uses: webfactory/ssh-agent@v1.0.3
       with: 
         ssh-private-key: ${{ secrets.DEPLOY_KEY }} 
         host: ${{ secrets.UBUNTU_HOST }}
@@ -81,9 +81,11 @@ jobs:
         script: |
           echo "Deploying ..."
           sudo rm -rf /var/www/html/*
-          sudo cp -r GITHUB_WORKSPACE/web/* /var/www/html/ 2>/dev/null || sudo cp -r web/* /var/www/html/
+          sudo cp -r {{ github.workspace }}/web/* /var/www/html/ 2>/dev/null || sudo cp -r ${{ github_workspace }}/* /var/www/html/ 2>/dev/null || true
+          ls -la /var/www/html/
           sudo systemctl restart nginx || sudo systemctl restart apache2 || true
-          echo "Deployed to /var/www/html"
+          echo "Deployment done - $(date)" | sudo tee -a /var/log/interswitch_deployments.log
+          echo "Deployed commit ${{ github.sha }}"
 
     - name: Add host to known_hosts
       shell: bash
