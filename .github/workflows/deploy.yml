@@ -10,7 +10,7 @@ jobs:
   # ================================================
   validate:
     name: Validate Web Files
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
 
      - name: Checkout repository
