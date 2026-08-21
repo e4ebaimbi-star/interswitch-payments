@@ -35,8 +35,7 @@ jobs:
 
      - name: Check index.html exists and is not empty
        run: |
-         if [ -f "web/index.html"] && [ -s "web/index.html" ];
-  then
+         if [ -f "web/index.html"] && [ -s "web/index.html" ]; then
            echo "index.html exist and not empty"
          else
            echo "index.html missing"
@@ -45,8 +44,7 @@ jobs:
 
      - name: Check style.css exists and is not empty
        run: |
-         if [ -f "web/style.css" ] && [ -s "web/style.css" ];
-  then
+         if [ -f "web/style.css" ] && [ -s "web/style.css" ]; then
             echo "style.css ok"
          else 
             echo "style.css missing or empty"
