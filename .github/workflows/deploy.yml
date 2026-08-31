@@ -89,13 +89,14 @@ jobs:
         run: |
           echo "Copying files to Nginx..."
 
-          sudo mkdir -p /usr/share/nginx/html
-          sudo cp -r web/* /usr/share/nginx/html/
+          sudo mkdir -p /var/www/html
+          sudo rm -rf /var/www/html/*
+          sudo cp -r web/* /var/www/html/
 
       - name: Set web file permissions
         run: |
-          sudo chown -R www-data:www-data /usr/share/nginx/html/
-          sudo chmod -R 755 /usr/share/nginx/html/
+          sudo chown -R www-data:www-data /var/www/html/
+          sudo chmod -R 755 /var/www/html/
 
       - name: Test Nginx configuration
         run: |
@@ -156,3 +157,10 @@ jobs:
           echo "Content check: PASSED"
           echo "Site: http://localhost"
           echo "================================================"
+
+      - name: Show deployed page
+        run: |
+          echo "===== HTML BEING SERVED ====="
+          curl -s http://localhost
+          echo
+          echo "============================="
