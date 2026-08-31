@@ -64,47 +64,47 @@ jobs:
       # ============================================================
       # JOB 2: Deploy after validation passes
       # ============================================================
-deploy:
-  name: Deploy to Nginx
-  runs-on: ubuntu-latest
-  needs: validate
-  if: github.ref == 'refs/heads/main'
+  deploy:
+    name: Deploy to Nginx
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.ref == 'refs/heads/main'
 
-  steps:
+    steps:
 
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
     # --------------------------------------------------------
     # Install and start Nginx on the GitHub runner
     # --------------------------------------------------------
-    - name: Install Nginx
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y nginx
+      - name: Install Nginx
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y nginx
 
-    - name: Start Nginx
-      run: |
-        sudo systemctl start nginx
-        sudo systemctl enable nginx
+      - name: Start Nginx
+        run: |
+          sudo systemctl start nginx
+          sudo systemctl enable nginx
 
     # --------------------------------------------------------
     # Copy web files to Nginx web root
     # --------------------------------------------------------
-    - name: Copy web files to Nginx
-      run: |
-        echo "Copying files to Nginx..."
+      - name: Copy web files to Nginx
+        run: |
+          echo "Copying files to Nginx..."
 
-        sudo mkdir -p /var/www/html
-        sudo cp -r web/* /var/www/html/
+          sudo mkdir -p /var/www/html
+          sudo cp -r web/* /var/www/html/
 
     # --------------------------------------------------------
     # Set permissions
     # --------------------------------------------------------
-    - name: Set web file permissions
-      run: |
-        sudo chown -R www-data:www-data /var/www/html
-        sudo chmod -R 755 /var/www/html
+      - name: Set web file permissions
+        run: |
+          sudo chown -R www-data:www-data /var/www/html
+          sudo chmod -R 755 /var/www/html
 
     # --------------------------------------------------------
     # Test Nginx configuration
