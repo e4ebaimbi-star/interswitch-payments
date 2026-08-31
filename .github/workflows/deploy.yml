@@ -71,12 +71,10 @@ jobs:
     if: github.ref == 'refs/heads/main'
 
     steps:
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
-    # --------------------------------------------------------
-    # Install and start Nginx on the GitHub runner
-    # --------------------------------------------------------
       - name: Install Nginx
         run: |
           sudo apt-get update
@@ -87,74 +85,74 @@ jobs:
           sudo systemctl start nginx
           sudo systemctl enable nginx
 
-    # --------------------------------------------------------
-    # Copy web files to Nginx web root
-    # --------------------------------------------------------
       - name: Copy web files to Nginx
         run: |
           echo "Copying files to Nginx..."
 
-          sudo mkdir -p /var/www/html
-          sudo cp -r web/* /var/www/html/
+          sudo mkdir -p /usr/share/nginx/html
+          sudo cp -r web/* /usr/share/nginx/html/
 
-    # --------------------------------------------------------
-    # Set permissions
-    # --------------------------------------------------------
       - name: Set web file permissions
         run: |
-          sudo chown -R www-data:www-data /var/www/html
-          sudo chmod -R 755 /var/www/html
+          sudo chown -R www-data:www-data /usr/share/nginx/html/
+          sudo chmod -R 755 /usr/share/nginx/html/
 
-    # --------------------------------------------------------
-    # Test Nginx configuration
-    # --------------------------------------------------------
       - name: Test Nginx configuration
         run: |
           sudo nginx -t
 
-    # --------------------------------------------------------
-    # Reload Nginx after deployment
-    # --------------------------------------------------------
       - name: Reload Nginx
         run: |
           sudo systemctl reload nginx
 
-    # --------------------------------------------------------
-    # Verify Nginx is still running
-    # --------------------------------------------------------
       - name: Verify Nginx is still running
         run: |
           sudo systemctl status nginx --no-pager
 
-    # --------------------------------------------------------
-    # Verify website responds correctly
-    # --------------------------------------------------------
-      - name: Verify website response
+      - name: Wait for site to be ready
         run: |
-          echo "Checking deployed website..."
+          sleep 5
 
-          curl -f http://localhost
+      - name: Check site responds with HTTP 200
+        run: |
+          echo "Checking site health..."
 
-          echo
-          echo "Website responded successfully."
+          HTTP_STATUS=$(curl -s -o /dev/null -w '%{http_code}' \
+            http://localhost)
 
-    # --------------------------------------------------------
-    # Write deployment log entry
-    # --------------------------------------------------------
+          echo "HTTP response code: $HTTP_STATUS"
+
+          if [ "$HTTP_STATUS" -eq 200 ]; then
+            echo "HEALTH CHECK PASSED: Site is responding with HTTP 200"
+          else
+            echo "HEALTH CHECK FAILED: Site returned HTTP $HTTP_STATUS"
+            exit 1
+          fi
+
+      - name: Check page contains Interswitch content
+        run: |
+          PAGE=$(curl -s http://localhost)
+
+          if echo "$PAGE" | grep -q "Interswitch"; then
+            echo "CONTENT CHECK PASSED: Page contains expected content"
+          else
+            echo "CONTENT CHECK FAILED: Unexpected page content detected"
+            echo "This may mean the wrong files were deployed"
+            exit 1
+          fi
+
       - name: Write deployment log entry
         run: |
           echo "[$(date)] Deployed commit ${{ github.sha }}" \
             | sudo tee -a /var/log/interswitch_deployments.log
 
-    # --------------------------------------------------------
-    # Deployment complete
-    # --------------------------------------------------------
       - name: Deployment complete
         run: |
-          echo "=========================================="
+          echo "================================================"
           echo "Deployment complete!"
           echo "Commit: ${{ github.sha }}"
           echo "Nginx: running"
-          echo "Website: responding successfully"
-          echo "=========================================="
-       
+          echo "Health check: PASSED"
+          echo "Content check: PASSED"
+          echo "Site: http://localhost"
+          echo "================================================"
