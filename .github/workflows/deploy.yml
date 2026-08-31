@@ -80,6 +80,26 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y nginx
 
+      - name: Configure Nginx
+        run: |
+          sudo tee /etc/nginx/sites-available/default > /dev/null <<'EOF'
+          server {
+              listen 80 default_server;
+              listen [::]:80 default_server;
+
+              root /var/www/html;
+              index index.html;
+
+              server_name _;
+
+              location / {
+              try_files $uri $uri/ =404;
+              }
+          }
+          EOF
+
+          sudo nginx -t
+
       - name: Start Nginx
         run: |
           sudo systemctl start nginx
