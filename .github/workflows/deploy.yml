@@ -150,15 +150,33 @@ jobs:
             exit 1
           fi
 
-      - name: Check page contains Interswitch content
+      - name: Verify deployed content
         run: |
-          PAGE=$(curl -s http://localhost)
+          echo "Checking source file..."
 
-          if echo "$PAGE" | grep -q "Interswitch"; then
-            echo "CONTENT CHECK PASSED: Page contains expected content"
+          if grep -qi "Interswitch" web/index.html; then
+            echo "SOURCE CHECK PASSED: Interswitch found in web/index.html"
           else
-            echo "CONTENT CHECK FAILED: Unexpected page content detected"
-            echo "This may mean the wrong files were deployed"
+            echo "SOURCE CHECK FAILED: Interswitch was not found in web/index.html"
+            echo "Here is the actual index.html:"
+            cat web/index.html
+            exit 1
+          fi
+
+          echo
+          echo "Checking content served by Nginx..."
+
+          PAGE=$(curl -fsS http://localhost)
+
+          if echo "$PAGE" | grep -qi "Interswitch"; then
+            echo "DEPLOYMENT CONTENT CHECK PASSED"
+            echo "Nginx is serving the expected Interswitch content"
+          else
+            echo "DEPLOYMENT CONTENT CHECK FAILED"
+            echo "Nginx responded, but the expected content was not found"
+            echo
+            echo "Page returned by Nginx:"
+            echo "$PAGE"
             exit 1
           fi
 
@@ -177,6 +195,12 @@ jobs:
           echo "Content check: PASSED"
           echo "Site: http://localhost"
           echo "================================================"
+
+      - name: Show deployed index file
+        run: |
+          echo "===== /var/www/html/index.html ====="
+          sudo cat /var/www/html/index.html
+          echo "===================================="    
 
       - name: Show deployed page
         run: |
