@@ -100,46 +100,40 @@ jobs:
 
           sudo nginx -t
 
+      - name: Deploy website files
+        run: |
+          echo "Deploying website..."
+
+          sudo rm -rf /var/www/html/*
+          sudo cp -r web/* /var/www/html/
+
+          sudo chown -R www-data:www-data /var/www/html
+          sudo chmod -R 755 /var/www/html
+
+          echo "Deployed files:"
+          sudo ls -lah /var/www/html
+
       - name: Start Nginx
         run: |
           sudo systemctl start nginx
           sudo systemctl enable nginx
 
-      - name: Copy web files to Nginx
-        run: |
-          echo "Copying files to Nginx..."
 
-          sudo mkdir -p /var/www/html
-          sudo rm -rf /var/www/html/*
-          sudo cp -r web/* /var/www/html/
-
-      - name: Set web file permissions
-        run: |
-          sudo chown -R www-data:www-data /var/www/html/
-          sudo chmod -R 755 /var/www/html/
-
-      - name: Test Nginx configuration
+      - name: Verify Nginx configuration
         run: |
           sudo nginx -t
 
-      - name: Reload Nginx
+      - name: Verify deployed index.html
         run: |
-          sudo systemctl reload nginx
-
-      - name: Verify Nginx is still running
-        run: |
-          sudo systemctl status nginx --no-pager
-
-      - name: Wait for site to be ready
-        run: |
-          sleep 5
+          echo "===== DEPLOYED index.html ====="
+          sudo cat /var/www/html/index.html
+          echo "==============================="
 
       - name: Check site responds with HTTP 200
         run: |
           echo "Checking site health..."
 
-          HTTP_STATUS=$(curl -s -o /dev/null -w '%{http_code}' \
-            http://localhost)
+          HTTP_STATUS=$(curl -sS -o /dev/null -w '%{http_code}' http://localhost)
 
           echo "HTTP response code: $HTTP_STATUS"
 
@@ -150,61 +144,29 @@ jobs:
             exit 1
           fi
 
-      - name: Verify deployed content
+      - name: Check page contains Interswitch content
         run: |
-          echo "Checking source file..."
+          echo "Checking deployed page content..."
 
-          if grep -qi "Interswitch" web/index.html; then
-            echo "SOURCE CHECK PASSED: Interswitch found in web/index.html"
-          else
-            echo "SOURCE CHECK FAILED: Interswitch was not found in web/index.html"
-            echo "Here is the actual index.html:"
-            cat web/index.html
-            exit 1
-          fi
+          PAGE=$(curl -sS http://localhost)
 
-          echo
-          echo "Checking content served by Nginx..."
-
-          PAGE=$(curl -fsS http://localhost)
+          echo "===== PAGE RETURNED BY NGINX ====="
+          echo "$PAGE"
+          echo "==================================="
 
           if echo "$PAGE" | grep -qi "Interswitch"; then
-            echo "DEPLOYMENT CONTENT CHECK PASSED"
-            echo "Nginx is serving the expected Interswitch content"
+            echo "CONTENT CHECK PASSED: Page contains expected Interswitch content"
           else
-            echo "DEPLOYMENT CONTENT CHECK FAILED"
-            echo "Nginx responded, but the expected content was not found"
-            echo
-            echo "Page returned by Nginx:"
-            echo "$PAGE"
+            echo "CONTENT CHECK FAILED: Unexpected page content detected"
             exit 1
           fi
 
-      - name: Write deployment log entry
-        run: |
-          echo "[$(date)] Deployed commit ${{ github.sha }}" \
-            | sudo tee -a /var/log/interswitch_deployments.log
-
-      - name: Deployment complete
+      - name: Health check summary
         run: |
           echo "================================================"
-          echo "Deployment complete!"
-          echo "Commit: ${{ github.sha }}"
-          echo "Nginx: running"
-          echo "Health check: PASSED"
-          echo "Content check: PASSED"
-          echo "Site: http://localhost"
+          echo "All health checks passed."
+          echo "Site verified at: http://localhost"
           echo "================================================"
 
-      - name: Show deployed index file
-        run: |
-          echo "===== /var/www/html/index.html ====="
-          sudo cat /var/www/html/index.html
-          echo "===================================="    
 
-      - name: Show deployed page
-        run: |
-          echo "===== HTML BEING SERVED ====="
-          curl -s http://localhost
-          echo
-          echo "============================="
+     
