@@ -80,93 +80,72 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y nginx
 
-      - name: Configure Nginx
-        run: |
-          sudo tee /etc/nginx/sites-available/default > /dev/null <<'EOF'
-          server {
-              listen 80 default_server;
-              listen [::]:80 default_server;
-
-              root /var/www/html;
-              index index.html;
-
-              server_name _;
-
-              location / {
-              try_files $uri $uri/ =404;
-              }
-          }
-          EOF
-
-          sudo nginx -t
-
-      - name: Deploy website files
-        run: |
-          echo "Deploying website..."
-
-          sudo rm -rf /var/www/html/*
-          sudo cp -r web/* /var/www/html/
-
-          sudo chown -R www-data:www-data /var/www/html
-          sudo chmod -R 755 /var/www/html
-
-          echo "Deployed files:"
-          sudo ls -lah /var/www/html
-
       - name: Start Nginx
         run: |
           sudo systemctl start nginx
           sudo systemctl enable nginx
 
+      - name: Copy web files to Nginx
+        run: |
+          echo "Copying files to Nginx..."
 
-      - name: Verify Nginx configuration
+          sudo mkdir -p /var/www/html
+          sudo rm -rf /var/www/html/*
+          sudo cp -r web/* /var/www/html/
+
+      - name: Set web file permissions
+        run: |
+          sudo chown -R www-data:www-data /var/www/html/
+          sudo chmod -R 755 /var/www/html/
+
+      - name: Verify deployed files
+        run: |
+          echo "=== Files deployed to Nginx ==="
+          sudo ls -lah /var/www/html
+          echo
+          echo "=== Checking index.html ==="
+          sudo grep -i "Interswitch" /var/www/html/index.html
+
+      - name: Test Nginx configuration
         run: |
           sudo nginx -t
 
-      - name: Verify deployed index.html
+      - name: Reload Nginx
         run: |
-          echo "===== DEPLOYED index.html ====="
-          sudo cat /var/www/html/index.html
-          echo "==============================="
+          sudo systemctl reload nginx
+
+      - name: Verify Nginx is still running
+        run: |
+          sudo systemctl status nginx --no-pager
+
+      - name: Wait for site to be ready
+        run: |
+          sleep 5
 
       - name: Check site responds with HTTP 200
         run: |
           echo "Checking site health..."
 
-          HTTP_STATUS=$(curl -sS -o /dev/null -w '%{http_code}' http://localhost)
+          HTTP_STATUS=$(curl -s -o /dev/null -w '%{http_code}' \
+           http://localhost)
 
           echo "HTTP response code: $HTTP_STATUS"
 
           if [ "$HTTP_STATUS" -eq 200 ]; then
-            echo "HEALTH CHECK PASSED: Site is responding with HTTP 200"
+           echo "HEALTH CHECK PASSED: Site is responding with HTTP 200"
           else
-            echo "HEALTH CHECK FAILED: Site returned HTTP $HTTP_STATUS"
-            exit 1
+           echo "HEALTH CHECK FAILED: Site returned HTTP $HTTP_STATUS"
+           exit 1
           fi
 
       - name: Check page contains Interswitch content
         run: |
-          echo "Checking deployed page content..."
+          PAGE=$(curl -s http://localhost)
 
-          PAGE=$(curl -sS http://localhost)
-
-          echo "===== PAGE RETURNED BY NGINX ====="
-          echo "$PAGE"
-          echo "==================================="
-
-          if echo "$PAGE" | grep -qi "Interswitch"; then
-            echo "CONTENT CHECK PASSED: Page contains expected Interswitch content"
+          if echo "$PAGE" | grep -q "Interswitch"; then
+            echo "CONTENT CHECK PASSED: Page contains expected content"
           else
             echo "CONTENT CHECK FAILED: Unexpected page content detected"
+            echo "This may mean the wrong files were deployed"
             exit 1
           fi
-
-      - name: Health check summary
-        run: |
-          echo "================================================"
-          echo "All health checks passed."
-          echo "Site verified at: http://localhost"
-          echo "================================================"
-
-
-     
