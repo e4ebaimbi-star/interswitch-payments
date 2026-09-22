@@ -70,7 +70,6 @@ pipeline {
                 echo 'Files deployed to /tmp/interswitch_deploy successfully.'
             }
         }    
-    }
  
         stage('Health Check') {
             steps {
@@ -103,6 +102,7 @@ pipeline {
             '''
             }
         }
+    }    
     post {
         success {
             echo '================================================'
