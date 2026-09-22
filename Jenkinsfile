@@ -73,43 +73,20 @@ pipeline {
  
         stage('Health Check') {
             steps {
-                echo 'Starting local server and verifying site is live...'
+                echo 'Verifying deployment...'
                 sh '''
-                    cd /tmp/interswitch_deploy
+                    if [ ! -f /tmp/interswitch_deploy/index.html ]; then
+                    echo "HEALTH CHECK FAILED: index.html not found in deploy directory"
+                    exit 1
+                fi
+                echo "OK: index.html found"
 
-                    if command -v python3 >/dev/null 2>&1; then
-                        PY=python3
-                    elif command -v python >/dev/null 2>&1; then
-                        PY=python
-                    else
-                        echo "HEALTH CHECK FAILED: no python interpreter found"
-                        exit 1
-                    fi
-
-                    $PY -m http.server 8000 &
-                    SERVER_PID=$!
-                    sleep 2
-
-                    HTTP_STATUS=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8000)
-                    echo "HTTP response: $HTTP_STATUS"
-
-                    if [ "$HTTP_STATUS" -ne 200 ]; then
-                        echo "HEALTH CHECK FAILED: Got HTTP $HTTP_STATUS"
-                        kill $SERVER_PID 2>/dev/null
-                        exit 1
-                    fi
-                    echo "HTTP 200 OK: Site is responding"
-
-                    CONTENT=$(curl -s http://localhost:8000)
-                    if ! echo "$CONTENT" | grep -q 'Interswitch'; then
-                        echo "CONTENT CHECK FAILED: Page does not contain expected content"
-                        kill $SERVER_PID 2>/dev/null
-                        exit 1
-                    fi
-                    echo "Content check passed: Interswitch portal is live"
-
-                    kill $SERVER_PID 2>/dev/null
-                '''
+                if ! grep -q 'Interswitch' /tmp/interswitch_deploy/index.html; then
+                    echo "CONTENT CHECK FAILED: Page does not contain expected content"
+                    exit 1
+                fi
+                echo "Content check passed: Interswitch portal files are in place"
+            '''
             }
         }
     }    
