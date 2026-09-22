@@ -59,21 +59,15 @@ pipeline {
             steps {
                 echo 'Starting local deployment...'
 
-                  // Ensure the staging directory exists
                 sh 'mkdir -p /tmp/interswitch_web'
-
-                 // Copy the web files to the staging directory
                 sh 'cp -r web/* /tmp/interswitch_web/'
 
-                // Move files into a local "web root" and fix permissions
                 sh '''
-                    sudo mkdir -p /usr/share/nginx/html
-                    sudo cp -r /tmp/interswitch_web/* /usr/share/nginx/html/
-                    sudo chown -R $(whoami):$(whoami) /usr/share/nginx/html/
-                    sudo chmod -R 755 /usr/share/nginx/html/
+                   mkdir -p /tmp/interswitch_deploy
+                   cp -r /tmp/interswitch_web/* /tmp/interswitch_deploy/
                   '''
 
-                echo 'Files deployed to local Nginx web root successfully.'
+                echo 'Files deployed to /tmp/interswitch_deploy successfully.'
             }
         }    
     }
