@@ -54,6 +54,34 @@ pipeline {
                 echo 'Validate stage complete. All files present.'
             }
         }
+
+        stage('Test') {
+            steps {
+                echo 'Running tests on web files...'
+
+                sh '''
+                    echo "Checking index.html contains <!DOCTYPE html>..."
+                    if ! grep -q "<!DOCTYPE html>" web/index.html; then
+                        echo "TEST FAILED: <!DOCTYPE html> not found in web/index.html"
+                        exit 1
+                    fi
+                    echo "OK: <!DOCTYPE html> found"
+                '''
+
+                sh '''
+                    echo "Counting HTML files in web/..."
+                    HTML_COUNT=$(find web/ -maxdepth 1 -name "*.html" | wc -l)
+                    echo "Number of HTML files: $HTML_COUNT"
+                '''
+
+                sh '''
+                    echo "File sizes in web/..."
+                    ls -lh web/
+                '''
+
+                echo 'Test stage complete.'
+            }
+        }
         
         stage('Deploy') {
             steps {
