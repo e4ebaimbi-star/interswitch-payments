@@ -75,31 +75,41 @@ pipeline {
             steps {
                 echo 'Starting local server and verifying site is live...'
                 sh '''
-                   cd /tmp/interswitch_deploy
-                   python3 -m http.server 8000 &
-                   SERVER_PID=$!
-                   sleep 2
+                    cd /tmp/interswitch_deploy
 
-                   HTTP_STATUS=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8000)
-                echo "HTTP response: $HTTP_STATUS"
+                    if command -v python3 >/dev/null 2>&1; then
+                        PY=python3
+                    elif command -v python >/dev/null 2>&1; then
+                        PY=python
+                    else
+                        echo "HEALTH CHECK FAILED: no python interpreter found"
+                        exit 1
+                    fi
 
-                if [ "$HTTP_STATUS" -ne 200 ]; then
-                  echo "HEALTH CHECK FAILED: Got HTTP $HTTP_STATUS"
-                  kill $SERVER_PID
-                  exit 1
-                fi
-                echo "HTTP 200 OK: Site is responding"
+                    $PY -m http.server 8000 &
+                    SERVER_PID=$!
+                    sleep 2
 
-                CONTENT=$(curl -s http://localhost:8000)
-                if ! echo "$CONTENT" | grep -q 'Interswitch'; then
-                  echo "CONTENT CHECK FAILED: Page does not contain expected content"
-                  kill $SERVER_PID
-                  exit 1
-               fi
-               echo "Content check passed: Interswitch portal is live"
+                    HTTP_STATUS=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8000)
+                    echo "HTTP response: $HTTP_STATUS"
 
-               kill $SERVER_PID
-            '''
+                    if [ "$HTTP_STATUS" -ne 200 ]; then
+                        echo "HEALTH CHECK FAILED: Got HTTP $HTTP_STATUS"
+                        kill $SERVER_PID 2>/dev/null
+                        exit 1
+                    fi
+                    echo "HTTP 200 OK: Site is responding"
+
+                    CONTENT=$(curl -s http://localhost:8000)
+                    if ! echo "$CONTENT" | grep -q 'Interswitch'; then
+                        echo "CONTENT CHECK FAILED: Page does not contain expected content"
+                        kill $SERVER_PID 2>/dev/null
+                        exit 1
+                    fi
+                    echo "Content check passed: Interswitch portal is live"
+
+                    kill $SERVER_PID 2>/dev/null
+                '''
             }
         }
     }    
