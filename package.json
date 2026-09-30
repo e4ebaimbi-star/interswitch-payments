@@ -1,0 +1,12 @@
+{
+    "name": "interswitch-merchant-portal",
+    "version": "1.0.0",
+    "description": "Interswitch Merchant Portal — containerised with Docker",
+    "main": "server.js",
+    "scripts": {
+        "start": "node server.js"
+    },
+    "dependencies": {
+        "express": "^4.18.0"
+    }
+}
