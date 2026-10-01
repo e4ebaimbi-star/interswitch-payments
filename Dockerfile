@@ -27,4 +27,7 @@ ENV PORT=3000
 EXPOSE 3000
 # Command to run when the container starts
 # Array format (exec form) is recommended over shell form
-CMD ["node", "server.js"]
+CMD ["node", "server.js"]: Default command to run app. Must be last.
+
+### Why Orde Matters
+Docker builds inlayers and caches each layer. By copying packages *.json and running npm install BEFORE copying the full code, we avoid reinstalling dependencies on every code change, making rebuilds faster and smaller
