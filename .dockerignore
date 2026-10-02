@@ -11,3 +11,4 @@ node_modules/
 .github/
 #CI pipeline definition, not needed in the container
 Jenkinsfile
+node_modules/

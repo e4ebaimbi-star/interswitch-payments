@@ -21,14 +21,56 @@ function animateCounter(el) {
 }
 document.querySelectorAll('.counter').forEach(animateCounter);
 // System status grid
-const services = [
-    { name: 'Payment API', status: 'operational' },
-    { name: 'Verve Network', status: 'operational' },
-    { name: 'Merchant Portal', status: 'operational' },
-    { name: 'Settlement Engine', status: 'operational' },
-    { name: 'Fraud Detection', status: 'operational' },
-    { name: 'Notification Service', status: 'maintenance' },
-];
+// --- LIVE SYSTEM STATUS (fetched from Payment API) ---
+// The API_URL comes from the window object, set by the server.
+// In Docker: portal calls http://api:4000/status (internal network)
+// In browser: the portal SERVER fetches the data, not the browser directly.
+// For simplicity in this lab, we fetch from the API via the portal's proxy
+endpoint.
+async function loadSystemStatus() {
+    const grid = document.getElementById('statusGrid');
+    grid.innerHTML = '<p style="color:#777">Loading status...</p>';
+    try {
+        // Call the portal's own /api/status route (which proxies to the payment API)
+        const response = await fetch('/api/status');
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        grid.innerHTML = '';
+        // Show the last updated time
+        const updated = document.createElement('p');
+
+        updated.style.cssText = 'color:#777;font-size:0.85rem;margin- bottom: 16px; grid - column: 1 / -1; ';
+        updated.textContent = `Last updated: ${new
+            Date(data.lastUpdated).toLocaleTimeString()}`;
+        grid.appendChild(updated);
+        // Render each service card
+        data.services.forEach(service => {
+            const card = document.createElement('div');
+            card.className = `status-card ${service.status}`;
+            card.innerHTML = `
+<div>
+<span class="service-name">${service.name}</span>
+<span class="service-meta">Uptime: ${service.uptime} |
+
+Latency: ${service.latency}</span>
+
+</div>
+<span class="service-status">
+${service.status === 'operational' ? '✔ Operational' :
+
+                    '⚠ Maintenance'}
+</span>`;
+            grid.appendChild(card);
+
+        });
+    } catch (err) {
+        grid.innerHTML = `<p style="color:#C62828">Could not load status:
+${err.message}.</p>`;
+    }
+}
+// Load status on page load, then refresh every 30 seconds
+loadSystemStatus();
+setInterval(loadSystemStatus, 30000);
 const grid = document.getElementById('statusGrid');
 services.forEach(s => {
     const card = document.createElement('div');
