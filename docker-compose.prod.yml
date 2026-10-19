@@ -1,0 +1,10 @@
+# Production Compose file — pulls images from Docker Hub
+# Usage: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+version: '3.8'
+services:
+  api:
+    image: YOUR_USERNAME/interswitch-api:v1 # Override: pull from Hub, don't build
+    build: !reset null # Remove build config for production
+  portal:
+    image: YOUR_USERNAME/interswitch-portal:v1
+    build: !reset null
