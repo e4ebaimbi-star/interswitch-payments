@@ -49,7 +49,7 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd /home/ubuntu/interswitch
-            kubectl apply -f k8s/
-            kubectl set image deployment/portal \portal=${{ env.IMAGE }}:${{ env.TAG }}
-            kubectl rollout status deployment/portal --timeout=120s
-            kubectl get pods -l app=portal
+            sudo k3s kubectl apply -f k8s/
+            sudo k3s kubectl set image deployment/portal=${{ env.IMAGE }}:${{ env.TAG }}
+            sudo k3s kubectl rollout status deployment/portal --timeout=120s
+            sudo k3s kubectl get pods -l app=portal
